@@ -1516,70 +1516,6 @@ style slider_slider:
 
 #мой код
 
-screen left(var, message):
-    frame:
-        xalign 1.0 ypos 300
-        xsize 280
-        vbox:
-            text message
-            bar value StaticValue(var, 100)
-
-screen using_stats():
-    frame:
-        xalign 1.0
-        xsize 280
-        vbox:
-            use stat(_("Усталость"), me.tiredness)
-            null height 15
-            use stat(_("Жажда"), me.thirst)
-
-screen stat(name, variable):
-
-    text name xalign 0.5
-    bar value StaticValue(variable, 100) xalign 0.5 xsize 280
-
-screen inventory:
-    frame:
-        xalign 1.0 ypos 125
-        xsize 280 ysize 180
-        vbox:
-            text "У вас в рюкзаке:"
-            textbutton "Телефон":
-
-                if phone.mode:
-                    hovered Show("left", None, phone.charge, "Осталось заряда")
-                    unhovered Hide("left")
-                else:
-                    hovered Notify("Телефон выключен")
-    
-                action MyCall("phone")
-
-            textbutton "Кофта":
-
-                action MyCall("hoodie")
-
-            textbutton "Бутылка с водой":
-
-                hovered Show("left", None, bottle.water, "Осталось воды")
-                unhovered Hide("left")
-                action MyCall("water")
-
-            if basket.mode:
-                textbutton "Корзина с грибами":
-
-                    action MyCall("basket")
-
-screen info(message):
-    modal True
-
-    zorder 200
-
-    frame:
-        xalign 0.5 ypos 200
-        xsize 400
-        vbox:
-            text message
-            textbutton "Ок" action Return()
 
 init python:
     screens = []
@@ -1623,17 +1559,12 @@ init python:
         thirst = 100
         time_in_forest = 0
         photos = []
-        illnesses = []
 
         def check(self):
             self.tiredness -= 3
             self.thirst -= 3
             if hoodie.mode:
                 self.thirst -= 3
-            else:
-                prob = renpy.random.randint(1, 100)
-                if (prob == 1):
-                    self.illnesses += ["mite"]
             if basket.mode:
                 self.tiredness -= 3
             if self.tiredness < 0 or self.thirst < 0:
@@ -1642,7 +1573,6 @@ init python:
             return True
 
     me = Person()
-    Check = renpy.curry(me.check)
 
     class Bottle:
         water = 100
@@ -1699,3 +1629,162 @@ init python:
 
     basket = Basket()
     LeaveBasket = renpy.curry(basket.leave)
+
+    class Cell:
+        def __init__(self, row, col):
+            self.row = row
+            self.col = col
+            self.ways = {'up': False, 'left': False, 'down': False, 'right': False}
+            self.used = False
+
+    class Maze:
+        def __init__(self, n, m):
+            self.rows = n
+            self.cols = m
+            self.field = [[Cell(row, col) for col in range(m)] for row in range(n)]
+            self.pos = self.field[n - 1][m // 2]
+
+            self.create()
+
+        def check_cell(self, row, col):
+            if row < self.rows and row >= 0 and col < self.cols and col >= 0:
+                return self.field[row][col]
+            return False
+
+        def find_next(self, row, col):
+            up = self.check_cell(row - 1, col)
+            down = self.check_cell(row + 1, col)
+            left = self.check_cell(row, col - 1)
+            right = self.check_cell(row, col + 1)
+            neighbors = []
+            if up and not up.used:
+                neighbors.append([up, 'up', 'down'])
+            if down and not down.used:
+                neighbors.append([down, 'down', 'up'])
+            if left and not left.used:
+                neighbors.append([left, 'left', 'right'])
+            if right and not right.used:
+                neighbors.append([right, 'right', 'left'])
+            if neighbors:
+                return renpy.random.choice(neighbors)
+            return False
+
+        def create(self):
+            stack = [self.field[0][0]]
+            while stack:
+                cur = stack[-1]
+                cur.used = True
+
+                next = self.find_next(cur.row, cur.col)
+                if next:
+                    stack.append(next[0])
+                    cur.ways[next[1]] = True
+                    next[0].ways[next[2]] = True
+
+                else:
+                    stack.pop()
+
+        def go_left(self):
+            cur = self.pos
+            self.pos = self.field[cur.row][cur.col - 1]
+            return me.check()
+
+        def go_right(self):
+            cur = self.pos
+            self.pos = self.field[cur.row][cur.col + 1]
+            return me.check()
+
+        def go_up(self):
+            cur = self.pos
+            self.pos = self.field[cur.row - 1][cur.col]
+            return me.check()
+
+        def go_down(self):
+            cur = self.pos
+            self.pos = self.field[cur.row + 1][cur.col]
+            return me.check()
+
+    maze = Maze(5, 5)
+
+screen left(var, message):
+    frame:
+        xalign 1.0 ypos 300
+        xsize 280
+        vbox:
+            text message
+            bar value StaticValue(var, 100)
+
+screen using_stats():
+    frame:
+        xalign 1.0
+        xsize 280
+        vbox:
+            use stat(_("Усталость"), me.tiredness)
+            null height 15
+            use stat(_("Жажда"), me.thirst)
+
+screen stat(name, variable):
+
+    text name xalign 0.5
+    bar value StaticValue(variable, 100) xalign 0.5 xsize 280
+
+screen inventory():
+    frame:
+        xalign 1.0 ypos 125
+        xsize 280 ysize 180
+        vbox:
+            text "У вас в рюкзаке:"
+            textbutton "Телефон":
+
+                if phone.mode:
+                    hovered Show("left", None, phone.charge, "Осталось заряда")
+                    unhovered Hide("left")
+                else:
+                    hovered Notify("Телефон выключен")
+
+                action MyCall("phone")
+
+            textbutton "Кофта":
+
+                action MyCall("hoodie")
+
+            textbutton "Бутылка с водой":
+
+                hovered Show("left", None, bottle.water, "Осталось воды")
+                unhovered Hide("left")
+                action MyCall("water")
+
+            if basket.mode:
+                textbutton "Корзина с грибами":
+
+                    action MyCall("basket")
+
+screen info(message):
+    modal True
+
+    zorder 100
+
+    frame:
+        xalign 0.5 ypos 200
+        xsize 400
+        vbox:
+            text message
+            textbutton "Ок" action Return()
+
+screen ways():
+    frame:
+        xalign 0.5 ypos 200
+        vbox:
+            text "Куда пойти дальше?"
+            if maze.pos.ways['down']:
+                textbutton "Назад":
+                    action MyCall("go_down")
+            if maze.pos.ways['up']:
+                textbutton "Вперёд":
+                    action MyCall("go_up")
+            if maze.pos.ways['right']:
+                textbutton "Направо":
+                    action MyCall("go_right")
+            if maze.pos.ways['left']:
+                textbutton "Налево":
+                    action MyCall("go_left")
