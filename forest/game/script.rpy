@@ -1,34 +1,75 @@
 ﻿# Вы можете расположить сценарий своей игры в этом файле.
 define i = Character("Я")
 
-
 label phone:
 
     if phone.mode:
-        call screen confirm("Выключить телефон?", TurnOffPhone(), Return())
+        menu:
+            "Выключить телефон?"
+
+            "Да":
+                $ phone.turn_off()
+            "Нет":
+                return
+
     else:
-        call screen confirm("Включить телефон?", TurnOnPhone(), Return())
+        menu:
+            "Включить телефон?"
+
+            "Да":
+                $ phone.turn_on()
+            "Нет":
+                return
+
     $ MyReturn()()
     return
 
 label hoodie:
 
     if hoodie.mode:
-        call screen confirm("Снять кофту?", PutOffHoodie(), Return())
+        menu:
+            "Снять кофту?"
+
+            "Да":
+                $ hoodie.put_off()
+            "Нет":
+                return
+
     else:
-        call screen confirm("Надеть кофту?", PutOffHoodie(), Return())
+        menu:
+            "Надеть кофту?"
+
+            "Да":
+                $ hoodie.put_on()
+            "Нет":
+                return
+
     $ MyReturn()()
     return
 
 label basket:
 
-    call screen confirm("Оставить корзину?", LeaveBasket(), Return())
+    menu:
+        "Оставить корзину?"
+
+        "Да":
+            $ basket.leave()
+        "Нет":
+            return
+
     $ MyReturn()()
     return
 
 label water:
 
-    call screen confirm("Выпить воды?", Drink(), Return())
+    menu:
+        "Выпить воды?"
+
+        "Да":
+            $ bottle.drink()
+        "Нет":
+            return
+
     $ MyReturn()()
     return
 
@@ -62,7 +103,7 @@ label start:
         "Может, пока попытаться выбраться самой?"
 
         "Оставаться на месте":
-            $ time_in_forest += 1
+            $ me.time_in_forest += 1
 
         "Поискать выход":
             jump finding_way
@@ -78,7 +119,7 @@ label start:
         "Может, всё-таки поискать дорогу?"
 
         "Оставаться на месте":
-            $ time_in_forest += 1
+            $ me.time_in_forest += 1
 
         "Поискать выход":
             jump finding_way
@@ -96,7 +137,7 @@ label start:
         "Кажется, всё-таки стоит куда-нибудь пойти."
 
         "Оставаться на месте":
-            $ time_in_forest += 1
+            $ me.time_in_forest += 1
 
         "Поискать выход":
             jump finding_way
@@ -136,12 +177,63 @@ label moose:
 label finding_way:
 
     "Ну ладно. Значит в путь!"
+    "Кажется, дорога должна быть где-то впереди"
+
+    jump in_maze
+
+label in_maze:
+
+    "Куда пойти дальше?"
+
+    call screen ways()
+
+label go_down:
+
+    show screen inventory
+    show screen using_stats
+
+    if not maze.go_down():
+        jump fainting
+    jump in_maze
+
+label go_up:
+
+    show screen inventory
+    show screen using_stats
+
+    if not maze.go_up():
+        jump fainting
+    if maze.pos == 0:
+        jump road
+    jump in_maze
+
+label go_right:
+
+    show screen inventory
+    show screen using_stats
+
+    if not maze.go_right():
+        jump fainting
+    jump in_maze
+
+label go_left:
+
+    show screen inventory
+    show screen using_stats
+
+    if not maze.go_left():
+        jump fainting
+    jump in_maze
+
+label road:
+
+    "Я вышла к дороге!"
 
     return
 
 label fainting:
 
-    "Что-то мне не хорошо"
+    "Что-то мне нехорошо"
 
     scene black with fade
 
