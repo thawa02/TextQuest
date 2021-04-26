@@ -1,4 +1,3 @@
-﻿# Вы можете расположить сценарий своей игры в этом файле.
 define i = Character("Я")
 
 label phone:
@@ -77,11 +76,11 @@ label water:
 # Игра начинается здесь:
 label start:
 
+    scene start
     "Мы с друзьями отправились за грибами в лес."
-    #тут будет картинка
+    scene forest_main
     "Год выдался богатый на грибы, и мы быстро все разбрелись, стараясь собрать побольше."
     "И через какое-то время я поняла, что потерялась."
-    #тут будет картинка
     i "Ау!"
     i "АУ!"
     i "Ау! Кто-нибудь!"
@@ -147,7 +146,7 @@ label start:
 
     pause 1
 
-    #тут будет картинка лося
+    show moose
     "Ой! Наверное, всё же стоит уйти."
     "Но можно сделать фото напоследок, не каждый день встречаешь лося"
 
@@ -160,9 +159,9 @@ label moose:
         "Сделать фото?"
 
         "Да, конечно!":
-            if phone_mode:
-                $ photos += ["moose"]
-                $ check_phone()
+            if phone.mode:
+                $ me.photos += ["moose"]
+                $ phone.check()
                 "Класс, у меня теперь есть фотка лося!"
                 jump finding_way
             else:
@@ -176,12 +175,24 @@ label moose:
 
 label finding_way:
 
+    hide moose
     "Ну ладно. Значит в путь!"
     "Кажется, дорога должна быть где-то впереди"
 
-    jump in_maze
+jump in_maze
 
 label in_maze:
+
+    if me.time_in_forest > 25:
+        scene forest25
+    elif me.time_in_forest > 20:
+        scene forest20
+    elif me.time_in_forest > 15:
+        scene forest15
+    elif me.time_in_forest > 10:
+        scene forest10
+    elif me.time_in_forest > 5:
+        scene forest5
 
     "Куда пойти дальше?"
 
@@ -189,28 +200,19 @@ label in_maze:
 
 label go_down:
 
-    show screen inventory
-    show screen using_stats
-
     if not maze.go_down():
         jump fainting
     jump in_maze
 
 label go_up:
 
-    show screen inventory
-    show screen using_stats
-
     if not maze.go_up():
         jump fainting
-    if maze.pos == 0:
+    if maze.pos.row == 0:
         jump road
     jump in_maze
 
 label go_right:
-
-    show screen inventory
-    show screen using_stats
 
     if not maze.go_right():
         jump fainting
@@ -218,24 +220,28 @@ label go_right:
 
 label go_left:
 
-    show screen inventory
-    show screen using_stats
-
     if not maze.go_left():
         jump fainting
     jump in_maze
 
 label road:
 
+    scene road
     "Я вышла к дороге!"
+
+    "Теперь меня точно скоро найдут."
 
     return
 
 label fainting:
 
-    "Что-то мне нехорошо"
+    "Что-то мне нехорошо."
 
     scene black with fade
+    scene hospital with fade
+    "Я пришла в себя на больничной койке."
+    "Я не смогла выбраться из леса и упала в обморок."
+    "К счастью, меня всё же нашли и отвезли в больницу."
+    "Кажется, я ещё долго не захочу ехать в лес за грибами!"
 
-    "Очнулась в больнице, концовку допишу"
     return
