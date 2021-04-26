@@ -1557,12 +1557,13 @@ init python:
     class Person:
         tiredness = 100
         thirst = 100
-        time_in_forest = 0
+        time_in_forest = 1
         photos = []
 
         def check(self):
             self.tiredness -= 3
             self.thirst -= 3
+            self.time_in_forest += 1
             if hoodie.mode:
                 self.thirst -= 3
             if basket.mode:
@@ -1643,6 +1644,7 @@ init python:
             self.cols = m
             self.field = [[Cell(row, col) for col in range(m)] for row in range(n)]
             self.pos = self.field[n - 1][m // 2]
+            self.next = ''
 
             self.create()
 
@@ -1704,7 +1706,7 @@ init python:
             self.pos = self.field[cur.row + 1][cur.col]
             return me.check()
 
-    maze = Maze(5, 5)
+    maze = Maze(7, 7)
 
 screen left(var, message):
     frame:
@@ -1778,13 +1780,13 @@ screen ways():
             text "Куда пойти дальше?"
             if maze.pos.ways['down']:
                 textbutton "Назад":
-                    action MyCall("go_down")
+                    action Jump("go_down")
             if maze.pos.ways['up']:
                 textbutton "Вперёд":
-                    action MyCall("go_up")
+                    action Jump("go_up")
             if maze.pos.ways['right']:
                 textbutton "Направо":
-                    action MyCall("go_right")
+                    action Jump("go_right")
             if maze.pos.ways['left']:
                 textbutton "Налево":
-                    action MyCall("go_left")
+                    action Jump("go_left")
